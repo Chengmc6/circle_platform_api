@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.circle_platform_api.mapper.FacilityReservationMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.example.circle_platform_api.entity.FacilityReservation">
+        <id column="id" property="id" />
+        <result column="facility_id" property="facilityId" />
+        <result column="event_id" property="eventId" />
+        <result column="circle_id" property="circleId" />
+        <result column="user_id" property="userId" />
+        <result column="start_time" property="startTime" />
+        <result column="end_time" property="endTime" />
+        <result column="status" property="status" />
+        <result column="reviewer_id" property="reviewerId" />
+        <result column="review_remark" property="reviewRemark" />
+        <result column="reviewed_at" property="reviewedAt" />
+        <result column="created_at" property="createdAt" />
+        <result column="updated_at" property="updatedAt" />
+        <result column="delete_at" property="deleteAt" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, facility_id, event_id, circle_id, user_id, start_time, end_time, status, reviewer_id, review_remark, reviewed_at, created_at, updated_at, delete_at
+    </sql>
+
+</mapper>

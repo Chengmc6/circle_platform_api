@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.circle_platform_api.mapper.EventMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.example.circle_platform_api.entity.Event">
+        <id column="id" property="id" />
+        <result column="circle_id" property="circleId" />
+        <result column="creator_id" property="creatorId" />
+        <result column="title" property="title" />
+        <result column="description" property="description" />
+        <result column="location" property="location" />
+        <result column="start_time" property="startTime" />
+        <result column="end_time" property="endTime" />
+        <result column="max_capacity" property="maxCapacity" />
+        <result column="current_count" property="currentCount" />
+        <result column="is_public" property="isPublic" />
+        <result column="source_event_id" property="sourceEventId" />
+        <result column="created_at" property="createdAt" />
+        <result column="updated_at" property="updatedAt" />
+        <result column="delete_at" property="deleteAt" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, circle_id, creator_id, title, description, location, start_time, end_time, max_capacity, current_count, is_public, source_event_id, created_at, updated_at, delete_at
+    </sql>
+
+</mapper>

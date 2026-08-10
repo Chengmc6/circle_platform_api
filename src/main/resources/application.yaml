@@ -1,0 +1,36 @@
+spring:
+  application:
+    name: circle_platform_api
+  profiles:
+    active: local
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: JDBC:mysql://localhost:3306/circle_platform?serverTimezone=UTC
+    username: root
+    password: root
+  mvc:
+    throw-exception-if-no-handler-found: true
+
+
+mybatis-plus:
+  type-enums-package: com.example.circle_platform_api.enums #指定枚举路径
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    map-underscore-to-camel-case: true #声明mybatis查询SQL字段自动映射实体类的成员变量
+    lazy-loading-enabled: true
+    default-enum-type-handler: com.baomidou.mybatisplus.core.handlers.MybatisEnumTypeHandler
+  mapper-locations: classpath*:mapper/*.xml,classpath*:mapper/**/*Mapper.xml
+  global-config:
+    db-config:
+      id-type: auto #显式指定主键策略
+      logic-delete-field: deleteAt #逻辑删除配置
+      logic-delete-value: 'now()'
+      logic-not-delete-value: 'null'
+      insert-strategy: not_null #全局配置插入或更新时不被null字段覆盖
+      update-strategy: not_null
+  type-aliases-package: com.example.circle_platform_api.entity #取别名映射
+
+
+
+
+
