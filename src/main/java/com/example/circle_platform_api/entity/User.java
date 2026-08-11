@@ -5,6 +5,8 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.example.circle_platform_api.enums.UserRole;
+import com.example.circle_platform_api.enums.UserStatus;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
@@ -83,14 +85,14 @@ public class User implements Serializable {
      */
     @TableField("role")
     @Schema(description = "0普通用户 1系统管理员")
-    private Integer role;
+    private UserRole role;
 
     /**
      * 0在籍 1毕业/休学
      */
     @TableField("status")
     @Schema(description = "0在籍 1毕业/休学")
-    private Integer status;
+    private UserStatus status;
 
     /**
      * 创建时间
