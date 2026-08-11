@@ -1,9 +1,11 @@
 package com.example.circle_platform_api.security.cookie;
 
 import org.springframework.http.ResponseCookie;
+import org.springframework.stereotype.Component;
 
 import java.time.Duration;
 
+@Component
 public class CookieUtil {
 
     public ResponseCookie generateCookie(String token) {

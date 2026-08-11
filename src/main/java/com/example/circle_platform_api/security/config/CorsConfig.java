@@ -22,7 +22,7 @@ public class CorsConfig {
         CorsConfiguration configuration = new CorsConfiguration();
 
         //允许的请求源
-        configuration.setAllowedOrigins(requestProperties.getAllowedOrigins());
+        configuration.setAllowedOriginPatterns(requestProperties.getAllowedOrigins());
 
         //允许所有请求方法，包括 OPTIONS, POST, GET, etc.
         configuration.setAllowedMethods(Collections.singletonList("*"));
@@ -34,7 +34,7 @@ public class CorsConfig {
         configuration.setAllowCredentials(true);
 
         // 预检请求缓存时间（单位：秒）
-        configuration.setMaxAge(Duration.ofSeconds(5));
+        configuration.setMaxAge(Duration.ofHours(1));
 
         //注册配置
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
