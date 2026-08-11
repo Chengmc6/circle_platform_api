@@ -109,7 +109,8 @@ public class User implements Serializable {
     /**
      * 删除时间（NULL：未删除；非NULL：已逻辑删除）
      */
-    @TableLogic(value = "null", delval = "now()")
+    @JsonIgnore
+    @TableLogic
     @TableField("delete_at")
     @Schema(description = "删除时间（NULL：未删除；非NULL：已逻辑删除）")
     private LocalDateTime deleteAt;

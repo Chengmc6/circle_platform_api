@@ -6,6 +6,8 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.example.circle_platform_api.enums.ApplicationStatus;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
@@ -68,7 +70,7 @@ public class CircleJoinApplication implements Serializable {
      */
     @TableField("status")
     @Schema(description = "0待审核 1已通过 2已拒绝")
-    private Integer status;
+    private ApplicationStatus status;
 
     /**
      * 审核人ID（社团无管理员时由系统管理员审核）
@@ -108,7 +110,8 @@ public class CircleJoinApplication implements Serializable {
     /**
      * 删除时间（NULL：未删除；非NULL：已逻辑删除）
      */
-    @TableLogic(value = "null", delval = "now()")
+    @JsonIgnore
+    @TableLogic
     @TableField("delete_at")
     @Schema(description = "删除时间（NULL：未删除；非NULL：已逻辑删除）")
     private LocalDateTime deleteAt;

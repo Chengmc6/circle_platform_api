@@ -8,7 +8,7 @@
         <result column="name" property="name" />
         <result column="location" property="location" />
         <result column="capacity" property="capacity" />
-        <result column="type" property="type" />
+        <result column="category_id" property="categoryId" />
         <result column="description" property="description" />
         <result column="created_at" property="createdAt" />
         <result column="updated_at" property="updatedAt" />
@@ -17,7 +17,7 @@
 
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
-        id, name, location, capacity, type, description, created_at, updated_at, delete_at
+        id, name, location, capacity, category_id, description, created_at, updated_at, delete_at
     </sql>
 
 </mapper>

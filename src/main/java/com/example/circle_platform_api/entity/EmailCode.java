@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.example.circle_platform_api.enums.BooleanEnum;
+import com.example.circle_platform_api.enums.EmailCodeType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
@@ -58,7 +60,7 @@ public class EmailCode implements Serializable {
      */
     @TableField("type")
     @Schema(description = "0忘记密码 1其他用途")
-    private Integer type;
+    private EmailCodeType type;
 
     /**
      * 过期时间
@@ -72,7 +74,7 @@ public class EmailCode implements Serializable {
      */
     @TableField("is_used")
     @Schema(description = "0未使用 1已使用")
-    private Integer isUsed;
+    private BooleanEnum isUsed;
 
     /**
      * 创建时间

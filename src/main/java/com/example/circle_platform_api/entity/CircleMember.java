@@ -1,11 +1,12 @@
 package com.example.circle_platform_api.entity;
 
-import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.example.circle_platform_api.enums.CircleMemberRole;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
@@ -61,7 +62,7 @@ public class CircleMember implements Serializable {
      */
     @TableField("role")
     @Schema(description = "0普通成员 1副社长(可多个) 2社长(唯一)")
-    private Integer role;
+    private CircleMemberRole role;
 
     /**
      * 加入时间
@@ -87,7 +88,8 @@ public class CircleMember implements Serializable {
     /**
      * 删除时间（NULL：未删除；非NULL：已逻辑删除）
      */
-    @TableLogic(value = "null", delval = "now()")
+    @JsonIgnore
+    @TableLogic
     @TableField("delete_at")
     @Schema(description = "删除时间（NULL：未删除；非NULL：已逻辑删除）")
     private LocalDateTime deleteAt;

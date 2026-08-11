@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.example.circle_platform_api.enums.CircleStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
@@ -72,7 +73,7 @@ public class Circle implements Serializable {
      */
     @TableField("status")
     @Schema(description = "0正常 1休眠(无管理员) 2已解散")
-    private Integer status;
+    private CircleStatus status;
 
     /**
      * 冗余字段：成员数

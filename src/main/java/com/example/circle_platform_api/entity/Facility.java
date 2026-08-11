@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
@@ -62,11 +63,11 @@ public class Facility implements Serializable {
     private Integer capacity;
 
     /**
-     * 0校内设施（需预约）1校外设施（无需预约）
+     * 分类ID
      */
-    @TableField("type")
-    @Schema(description = "0校内设施（需预约）1校外设施（无需预约）")
-    private Integer type;
+    @TableField("category_id")
+    @Schema(description = "分类ID")
+    private Long categoryId;
 
     /**
      * 设施说明
@@ -92,7 +93,8 @@ public class Facility implements Serializable {
     /**
      * 删除时间（NULL：未删除；非NULL：已逻辑删除）
      */
-    @TableLogic(value = "null",delval = "now()")
+    @JsonIgnore
+    @TableLogic
     @TableField("delete_at")
     @Schema(description = "删除时间（NULL：未删除；非NULL：已逻辑删除）")
     private LocalDateTime deleteAt;
