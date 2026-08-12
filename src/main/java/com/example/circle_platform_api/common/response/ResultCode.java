@@ -30,6 +30,7 @@ public enum ResultCode {
     USER_DELETED(1006, "用户已被删除"),
     PASSWORD_INCORRECT(1007, "密码错误"),
     ROLE_NOT_FOUND(1008, "角色不存在"),
+    USER_UPDATE_FAILED(1009,"用户更新失败")
     ;
 
     private final int code;

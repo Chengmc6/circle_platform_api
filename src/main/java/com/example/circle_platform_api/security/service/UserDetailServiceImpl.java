@@ -2,6 +2,7 @@ package com.example.circle_platform_api.security.service;
 
 import com.example.circle_platform_api.common.response.ResultCode;
 import com.example.circle_platform_api.entity.User;
+import com.example.circle_platform_api.enums.UserStatus;
 import com.example.circle_platform_api.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -23,6 +24,6 @@ public class UserDetailServiceImpl implements UserDetailsService {
             throw new UsernameNotFoundException(username+ResultCode.USER_NOT_FOUND.getMessage());
         }
 
-        return new SecurityUser(user.getId(), username,user.getRole(),user.getStatus()==1);
+        return new SecurityUser(user.getId(), username,user.getRole(),user.getStatus()== UserStatus.ENROLLED);
     }
 }

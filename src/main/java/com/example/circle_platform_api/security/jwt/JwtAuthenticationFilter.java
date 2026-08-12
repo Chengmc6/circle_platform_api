@@ -3,6 +3,7 @@ package com.example.circle_platform_api.security.jwt;
 import com.example.circle_platform_api.common.exception.BusinessException;
 import com.example.circle_platform_api.common.response.ResultCode;
 import com.example.circle_platform_api.entity.User;
+import com.example.circle_platform_api.enums.UserStatus;
 import com.example.circle_platform_api.security.service.SecurityUser;
 import com.example.circle_platform_api.service.UserService;
 import io.jsonwebtoken.Claims;
@@ -68,7 +69,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 throw new BusinessException(ResultCode.USER_NOT_FOUND);
             }
             // 构建LoginUser
-            SecurityUser loginUser=new SecurityUser(user.getId(), user.getUsername(), user.getRole(), user.getStatus()==1);
+            SecurityUser loginUser=new SecurityUser(user.getId(), user.getUsername(), user.getRole(), user.getStatus()== UserStatus.ENROLLED);
             // 构建spring security认证Authentication
             UsernamePasswordAuthenticationToken authenticationToken=
                     new UsernamePasswordAuthenticationToken(loginUser,null,loginUser.getAuthorities());

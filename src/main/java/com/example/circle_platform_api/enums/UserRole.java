@@ -9,7 +9,7 @@ import lombok.Getter;
 @AllArgsConstructor
 @JsonFormat(shape = JsonFormat.Shape.OBJECT)
 public enum UserRole {
-    STUDENT(0, "普通学生"),
+    USER(0, "普通学生"),
     ADMIN(1, "系统管理员");
 
     @EnumValue

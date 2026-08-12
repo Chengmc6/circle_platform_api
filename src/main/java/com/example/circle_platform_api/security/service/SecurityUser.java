@@ -1,5 +1,6 @@
 package com.example.circle_platform_api.security.service;
 
+import com.example.circle_platform_api.enums.UserRole;
 import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -13,19 +14,19 @@ public class SecurityUser implements UserDetails {
 
     private final Long userId;
     private final String username;
-    private final Integer role;
+    private final String role;
     private final Boolean enabled;
 
-    public SecurityUser(Long userId, String username, Integer role,Boolean enabled) {
+    public SecurityUser(Long userId, String username, UserRole role, Boolean enabled) {
         this.userId = userId;
         this.username = username;
-        this.role = role;
-        this.enabled=enabled;
+        this.role = role.name();
+        this.enabled = enabled;
     }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority(role == 1 ? "ROLE_ADMIN" : "ROLE_USER"));
+        return List.of(new SimpleGrantedAuthority("ROLE_" + role));
     }
 
     @Override
