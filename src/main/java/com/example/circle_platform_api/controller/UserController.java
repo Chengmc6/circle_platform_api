@@ -46,7 +46,7 @@ public class UserController {
         return ApiResponse.success();
     }
 
-    @PostMapping("/login")
+    @PostMapping("/pwd-login")
     public ApiResponse<LoginUserVo> passwordLogin(@RequestBody @NotNull @Valid LoginRequestDTO dto, HttpServletResponse response) {
         AuthResult result = authenticationService.authenticate(dto.username(), dto.password());
         LoginUserVo vo = userApplicationService.getLoginUserInfo(result.userId());
