@@ -10,11 +10,15 @@ import com.example.circle_platform_api.entity.CircleCreateApplication;
 import com.example.circle_platform_api.entity.User;
 import com.example.circle_platform_api.enums.ApplicationStatus;
 import com.example.circle_platform_api.enums.CircleStatus;
+import com.example.circle_platform_api.enums.UserRole;
 import com.example.circle_platform_api.mapstruct.CircleConvert;
 import com.example.circle_platform_api.model.dto.CircleCreateApplicationDTO;
 import com.example.circle_platform_api.model.dto.CircleQueryDTO;
+import com.example.circle_platform_api.model.dto.CircleUpdateDTO;
 import com.example.circle_platform_api.model.vo.CircleDetailVo;
 import com.example.circle_platform_api.model.vo.CircleVo;
+import com.example.circle_platform_api.security.service.SecurityUser;
+import com.example.circle_platform_api.security.utils.SecurityUtils;
 import com.example.circle_platform_api.service.CategoryService;
 import com.example.circle_platform_api.service.CircleCreateApplicationService;
 import com.example.circle_platform_api.service.CircleService;
@@ -43,13 +47,13 @@ public class CircleApplicationService {
     @Transactional(rollbackFor = Exception.class)
     public void createApplication(CircleCreateApplicationDTO dto) {
 
-        long pendingCount=circleCreateApplicationService.lambdaQuery()
-                .eq(CircleCreateApplication::getUserId,dto.getUserId())
+        long pendingCount = circleCreateApplicationService.lambdaQuery()
+                .eq(CircleCreateApplication::getUserId, dto.getUserId())
                 .eq(CircleCreateApplication::getStatus, ApplicationStatus.PENDING)
                 .count();
 
-        if (pendingCount>0){
-            throw new BusinessException(ResultCode.PENDING_APPLICATION_EXISTS.getCode(),"您有正在审核中的建社申请，请勿重复提交");
+        if (pendingCount > 0) {
+            throw new BusinessException(ResultCode.PENDING_APPLICATION_EXISTS.getCode(), "您有正在审核中的建社申请，请勿重复提交");
         }
 
         // 创建社团申请
@@ -66,10 +70,12 @@ public class CircleApplicationService {
 
         circleService.lambdaQuery()
                 .eq(Circle::getStatus, CircleStatus.NORMAL)
+                .eq(dto.getCategoryId() != null, Circle::getCategoryId, dto.getCategoryId())
+                .like(StringUtils.hasText(dto.getKeywords()), Circle::getName, dto.getKeywords())
                 .page(page);
 
         if (page.getRecords().isEmpty()) {
-            return PageResult.empty(dto.getPageSize());
+            return PageResult.empty(dto.getPageNum(), dto.getPageSize());
         }
 
         List<Long> categoryIds = page.getRecords().stream()
@@ -104,11 +110,10 @@ public class CircleApplicationService {
         return PageResult.of(page.getTotal(), page.getCurrent(), page.getSize(), page.getPages(), vos);
     }
 
+    @Transactional(readOnly = true)
     public CircleDetailVo getCircleDetails(Long circleId) {
 
-        Circle circle = circleService.lambdaQuery()
-                .eq(Circle::getId, circleId)
-                .one();
+        Circle circle = circleService.getById(circleId);
 
         if (circle == null) {
             throw new BusinessException(ResultCode.CIRCLE_NOT_FOUND);
@@ -133,6 +138,56 @@ public class CircleApplicationService {
                 ownerName,
                 circle.getMemberCount()
         );
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void dissolveCircle(Long circleId) {
+
+        SecurityUser user = SecurityUtils.getCurrentUser();
+
+        Circle circle = circleService.getById(circleId);
+
+        if (circle == null) {
+            throw new BusinessException(ResultCode.CIRCLE_NOT_FOUND);
+        }
+
+        if (circle.getStatus() == CircleStatus.DISSOLVED) {
+            throw new BusinessException(ResultCode.CIRCLE_DISSOLVED.getCode(), "社团已解散，无法进行操作");
+        }
+
+        if (!Objects.equals(circle.getOwnerId(), user.getUserId()) && !user.getRole().equals(UserRole.USER.name())) {
+            throw new BusinessException(ResultCode.FORBIDDEN.getCode(), "您没有权限进行此操作");
+        }
+
+        circleService.lambdaUpdate()
+                .eq(Circle::getId, circle.getId())
+                .set(Circle::getStatus, CircleStatus.DISSOLVED)
+                .update();
+    }
+
+    public void updateCircle(Long circleId, CircleUpdateDTO dto) {
+
+        Circle circle = circleService.getById(circleId);
+
+        if (circle == null) {
+            throw new BusinessException(ResultCode.CIRCLE_NOT_FOUND);
+        }
+
+        if (circle.getStatus() == CircleStatus.DISSOLVED) {
+            throw new BusinessException(ResultCode.CIRCLE_DISSOLVED.getCode(), "社团已解散，无法进行操作");
+        }
+
+        boolean success = circleService.lambdaUpdate()
+                .eq(Circle::getId, circleId)
+                .set(StringUtils.hasText(dto.getName()), Circle::getName, dto.getName())
+                .set(StringUtils.hasText(dto.getDescription()), Circle::getDescription, dto.getDescription())
+                .set(Objects.nonNull(dto.getCategoryId()), Circle::getCategoryId, dto.getCategoryId())
+                .update();
+
+        if(!success){
+            throw new BusinessException(ResultCode.CIRCLE_UPDATE_FAIL);
+        }
+
     }
 
 

@@ -75,9 +75,9 @@ public class UserController {
         return ApiResponse.success(userApplicationService.getUser(securityUser.getUserId()));
     }
 
-    @PostMapping("/update")
-    public ApiResponse<Void> updateUserInfo(@RequestBody @NotNull @Valid UserUpdateDTO dto){
-        userApplicationService.updateUser(dto);
+    @PostMapping("/{id}/update")
+    public ApiResponse<Void> updateUserInfo(@PathVariable Long id, @RequestBody @NotNull @Valid UserUpdateDTO dto){
+        userApplicationService.updateUser(id,dto);
         return ApiResponse.success();
     }
 

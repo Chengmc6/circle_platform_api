@@ -36,7 +36,8 @@ public enum ResultCode {
     APPLICATION_PROCESSED(2001,"申请已处理"),
     APPLICATION_NOT_FOUND(2002,"申请不存在"),
     CIRCLE_NOT_FOUND(2003,"社团不存在"),
-    CIRCLE_DISSOLVED(2004,"该社团已解散，无法查看详情")
+    CIRCLE_DISSOLVED(2004,"该社团已解散"),
+    CIRCLE_UPDATE_FAIL(2005,"社团更新失败")
     ;
 
     private final int code;

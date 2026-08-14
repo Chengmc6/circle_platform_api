@@ -5,6 +5,7 @@ import lombok.Data;
 @Data
 public class CircleQueryDTO {
     private String keywords;
+    private Long categoryId;
     private Long pageNum= 1L;
     private Long pageSize= 8L;
 }

@@ -82,11 +82,19 @@ public class UserApplicationService {
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public void updateUser(UserUpdateDTO dto) {
+    public void updateUser(Long currentUserId, UserUpdateDTO dto) {
 
-        User user = userConvert.updateToUser(dto);
+        User user = userService.getById(currentUserId);
 
-        boolean success = userService.updateById(user);
+        if (user == null) {
+            throw new BusinessException(ResultCode.USER_NOT_FOUND);
+        }
+
+        boolean success = userService.lambdaUpdate()
+                .eq(User::getId, currentUserId)
+                .set(User::getNickname, dto.getNickname())
+                .set(User::getAvatar, dto.getAvatar())
+                .update();
 
         if (!success) {
             throw new BusinessException(ResultCode.USER_UPDATE_FAILED);

@@ -2,6 +2,7 @@ package com.example.circle_platform_api.config;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateDeserializer;
 import com.fasterxml.jackson.datatype.jsr310.deser.LocalTimeDeserializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateSerializer;
@@ -31,6 +32,7 @@ public class JacksonConfig {
             builder.serializerByType(LocalDateTime.class,new LocalTimeSerializer(dateTimeFormatter));
             builder.serializerByType(LocalDate.class,new LocalDateSerializer(dateFormatter));
             builder.serializerByType(LocalTime.class,new LocalTimeSerializer(timeFormatter));
+            builder.serializerByType(Long.class, ToStringSerializer.instance);
             // 反序列化 (前端 -> 后端)
             builder.deserializerByType(LocalDateTime.class,new LocalTimeDeserializer(dateTimeFormatter));
             builder.deserializerByType(LocalDate.class,new LocalDateDeserializer(dateFormatter));

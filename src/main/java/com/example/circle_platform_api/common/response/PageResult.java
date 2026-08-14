@@ -38,7 +38,7 @@ public class PageResult<R> {
     /**
      * 返回空分页结果（保持请求的 pageSize）
      */
-    public static <R> PageResult<R> empty(Long pageSize) {
-        return of(0L, 1L, pageSize != null && pageSize >= 1 ? pageSize : 10L, 0L, List.of());
+    public static <R> PageResult<R> empty(Long currentPage,Long pageSize) {
+        return of(0L, currentPage, pageSize != null && pageSize >= 1 ? pageSize : 10L, 0L, List.of());
     }
 }
