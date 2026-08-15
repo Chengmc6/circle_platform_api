@@ -4,6 +4,7 @@ public record CircleDetailVo(
         Long id,
         String name,
         String description,
+        Long categoryId,
         Long ownerId,
         String ownerName,
         Integer memberCount

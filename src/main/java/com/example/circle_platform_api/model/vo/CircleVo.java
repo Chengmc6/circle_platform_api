@@ -4,7 +4,6 @@ public record CircleVo(
         Long id,
         String name,
         Long categoryId,
-        String categoryName,
         Integer memberCount
 ) {
 }

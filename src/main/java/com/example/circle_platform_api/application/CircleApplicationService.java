@@ -4,7 +4,6 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.circle_platform_api.common.exception.BusinessException;
 import com.example.circle_platform_api.common.response.PageResult;
 import com.example.circle_platform_api.common.response.ResultCode;
-import com.example.circle_platform_api.entity.Category;
 import com.example.circle_platform_api.entity.Circle;
 import com.example.circle_platform_api.entity.CircleCreateApplication;
 import com.example.circle_platform_api.entity.User;
@@ -12,27 +11,23 @@ import com.example.circle_platform_api.enums.ApplicationStatus;
 import com.example.circle_platform_api.enums.CircleStatus;
 import com.example.circle_platform_api.enums.UserRole;
 import com.example.circle_platform_api.mapstruct.CircleConvert;
-import com.example.circle_platform_api.model.dto.CircleCreateApplicationDTO;
-import com.example.circle_platform_api.model.dto.CircleQueryDTO;
-import com.example.circle_platform_api.model.dto.CircleUpdateDTO;
+import com.example.circle_platform_api.model.dto.*;
+import com.example.circle_platform_api.model.vo.CircleCreateApplicationVo;
 import com.example.circle_platform_api.model.vo.CircleDetailVo;
 import com.example.circle_platform_api.model.vo.CircleVo;
 import com.example.circle_platform_api.security.service.SecurityUser;
 import com.example.circle_platform_api.security.utils.SecurityUtils;
-import com.example.circle_platform_api.service.CategoryService;
 import com.example.circle_platform_api.service.CircleCreateApplicationService;
 import com.example.circle_platform_api.service.CircleService;
 import com.example.circle_platform_api.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -41,14 +36,86 @@ public class CircleApplicationService {
     private final CircleService circleService;
     private final UserService userService;
     private final CircleCreateApplicationService circleCreateApplicationService;
-    private final CategoryService categoryService;
     private final CircleConvert circleConvert;
 
     @Transactional(rollbackFor = Exception.class)
     public void createApplication(CircleCreateApplicationDTO dto) {
+        // 创建社团申请
+        CircleCreateApplication circleCreateApplication = circleConvert.createToEntity(dto);
+        circleCreateApplicationService.save(circleCreateApplication);
+
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void updateDraft(Long applicationId, CircleCreateApplicationUpdateDTO dto) {
+        CircleCreateApplication circleCreateApplication = circleCreateApplicationService.getById(applicationId);
+
+        if (circleCreateApplication == null) {
+            throw new BusinessException(ResultCode.APPLICATION_NOT_FOUND);
+        }
+
+        if (circleCreateApplication.getStatus() != ApplicationStatus.DRAFT) {
+            throw new BusinessException(ResultCode.APPLICATION_CAN_NOT_UPDATE);
+        }
+
+        CircleCreateApplication updateApplication = getCircleCreateApplication(dto, circleCreateApplication);
+        circleCreateApplicationService.updateById(updateApplication);
+    }
+
+    @NonNull
+    private CircleCreateApplication getCircleCreateApplication(CircleCreateApplicationUpdateDTO dto, CircleCreateApplication circleCreateApplication) {
+        CircleCreateApplication updateApplication = new CircleCreateApplication();
+        updateApplication.setId(circleCreateApplication.getId());
+        if (!dto.getName().isBlank()) {
+            updateApplication.setName(dto.getName());
+        }
+        if (dto.getCategoryId() != null) {
+            updateApplication.setCategoryId(dto.getCategoryId());
+        }
+        if (!dto.getDescription().isBlank()) {
+            updateApplication.setDescription(dto.getDescription());
+        }
+        if (!dto.getApplyReason().isBlank()) {
+            updateApplication.setApplyReason(dto.getApplyReason());
+        }
+        return updateApplication;
+    }
+
+    @Transactional(readOnly = true)
+    public PageResult<CircleCreateApplicationVo> getApplications(CircleCreateApplicationPageDTO dto) {
+
+        long pageNum = Math.max(1, dto.getPageNum());
+        Page<CircleCreateApplication> page = Page.of(pageNum, dto.getPageSize());
+
+        User user = userService.getById(SecurityUtils.getCurrentUserId());
+
+        circleCreateApplicationService.lambdaQuery()
+                .eq(CircleCreateApplication::getUserId, SecurityUtils.getCurrentUser())
+                .eq(CircleCreateApplication::getStatus, ApplicationStatus.fromCode(dto.getStatus()))
+                .orderByDesc(CircleCreateApplication::getCreatedAt)
+                .page(page);
+
+        String applyUserName = !user.getNickname().isBlank() ? user.getNickname() : user.getUsername();
+
+        List<CircleCreateApplicationVo> vos = page.getRecords().stream()
+                .map(c -> new CircleCreateApplicationVo(
+                        c.getId(),
+                        user.getId(),
+                        applyUserName,
+                        c.getCategoryId(),
+                        c.getName(),
+                        c.getStatus(),
+                        c.getCreatedAt()
+                ))
+                .toList();
+        return PageResult.of(page.getTotal(), page.getCurrent(), page.getSize(), page.getPages(), vos);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void sendCircleCreateApplication(Long applicationId) {
 
         long pendingCount = circleCreateApplicationService.lambdaQuery()
-                .eq(CircleCreateApplication::getUserId, dto.getUserId())
+                .eq(CircleCreateApplication::getUserId, SecurityUtils.getCurrentUserId())
                 .eq(CircleCreateApplication::getStatus, ApplicationStatus.PENDING)
                 .count();
 
@@ -56,17 +123,49 @@ public class CircleApplicationService {
             throw new BusinessException(ResultCode.PENDING_APPLICATION_EXISTS.getCode(), "您有正在审核中的建社申请，请勿重复提交");
         }
 
-        // 创建社团申请
-        CircleCreateApplication circleCreateApplication = circleConvert.createToEntity(dto);
-        circleCreateApplicationService.save(circleCreateApplication);
+        CircleCreateApplication circleCreateApplication = circleCreateApplicationService.getById(applicationId);
 
+        if (circleCreateApplication == null) {
+            throw new BusinessException(ResultCode.APPLICATION_NOT_FOUND);
+        }
+
+        if (circleCreateApplication.getStatus() != ApplicationStatus.DRAFT) {
+            throw new BusinessException(ResultCode.APPLICATION_APPLIED.getCode(), "草稿已经被处理，不能重复申请");
+        }
+
+        CircleCreateApplication updateApplication = new CircleCreateApplication();
+        updateApplication.setId(circleCreateApplication.getId());
+        updateApplication.setStatus(ApplicationStatus.PENDING);
+        circleCreateApplicationService.updateById(updateApplication);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void removeCircleCreateApplication(Long applicationId) {
+        CircleCreateApplication circleCreateApplication = circleCreateApplicationService.getById(applicationId);
+
+        if (circleCreateApplication == null) {
+            throw new BusinessException(ResultCode.APPLICATION_NOT_FOUND);
+        }
+
+        SecurityUser user = SecurityUtils.getCurrentUser();
+
+        if (!Objects.equals(circleCreateApplication.getUserId(), user.getUserId())) {
+            throw new BusinessException(ResultCode.FORBIDDEN.getCode(), "无权删除此请求");
+        }
+
+        if (circleCreateApplication.getStatus() == ApplicationStatus.PENDING) {
+            throw new BusinessException(ResultCode.APPLICATION_CAN_NOT_REMOVE);
+        }
+
+        circleCreateApplicationService.removeById(applicationId);
     }
 
     @Transactional(readOnly = true)
     public PageResult<CircleVo> getCircleList(CircleQueryDTO dto) {
 
+        long pageNum = Math.max(1, dto.getPageNum());
         // 构建分页
-        Page<Circle> page = Page.of(dto.getPageNum(), dto.getPageSize());
+        Page<Circle> page = Page.of(pageNum, dto.getPageSize());
 
         circleService.lambdaQuery()
                 .eq(Circle::getStatus, CircleStatus.NORMAL)
@@ -75,37 +174,16 @@ public class CircleApplicationService {
                 .page(page);
 
         if (page.getRecords().isEmpty()) {
-            return PageResult.empty(dto.getPageNum(), dto.getPageSize());
-        }
-
-        List<Long> categoryIds = page.getRecords().stream()
-                .map(Circle::getCategoryId)
-                .filter(Objects::nonNull)
-                .distinct()
-                .toList();
-
-        Map<Long, Category> categoryMap;
-        if (!categoryIds.isEmpty()) {
-            List<Category> categories = categoryService.lambdaQuery()
-                    .in(Category::getId, categoryIds)
-                    .list();
-            categoryMap = categories.stream()
-                    .collect(Collectors.toMap(Category::getId, c -> c));
-        } else {
-            categoryMap = new HashMap<>();
+            return PageResult.empty(pageNum, dto.getPageSize());
         }
 
         // 组装vo
         List<CircleVo> vos = page.getRecords().stream()
-                .map(circle -> {
-                    Category category = categoryMap.get(circle.getCategoryId());
-                    return new CircleVo(
-                            circle.getId(),
-                            circle.getName(),
-                            category != null ? category.getId() : null,
-                            category != null ? category.getName() : "未分类",
-                            circle.getMemberCount());
-                }).toList();
+                .map(circle -> new CircleVo(
+                        circle.getId(),
+                        circle.getName(),
+                        circle.getCategoryId(),
+                        circle.getMemberCount())).toList();
 
         return PageResult.of(page.getTotal(), page.getCurrent(), page.getSize(), page.getPages(), vos);
     }
@@ -134,6 +212,7 @@ public class CircleApplicationService {
                 circle.getId(),
                 circle.getName(),
                 circle.getDescription(),
+                circle.getCategoryId(),
                 circle.getOwnerId(),
                 ownerName,
                 circle.getMemberCount()
@@ -184,11 +263,10 @@ public class CircleApplicationService {
                 .set(Objects.nonNull(dto.getCategoryId()), Circle::getCategoryId, dto.getCategoryId())
                 .update();
 
-        if(!success){
+        if (!success) {
             throw new BusinessException(ResultCode.CIRCLE_UPDATE_FAIL);
         }
 
     }
-
 
 }

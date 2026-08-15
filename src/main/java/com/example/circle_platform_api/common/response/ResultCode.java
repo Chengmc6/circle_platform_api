@@ -33,11 +33,14 @@ public enum ResultCode {
     USER_UPDATE_FAILED(1009,"用户更新失败"),
 
     PENDING_APPLICATION_EXISTS(2000,"已存在待审核的申请"),
-    APPLICATION_PROCESSED(2001,"申请已处理"),
+    APPLICATION_PROCESSED(2001,"已被处理的申请"),
     APPLICATION_NOT_FOUND(2002,"申请不存在"),
     CIRCLE_NOT_FOUND(2003,"社团不存在"),
     CIRCLE_DISSOLVED(2004,"该社团已解散"),
-    CIRCLE_UPDATE_FAIL(2005,"社团更新失败")
+    CIRCLE_UPDATE_FAIL(2005,"社团更新失败"),
+    APPLICATION_APPLIED(2006,"不能重复申请"),
+    APPLICATION_CAN_NOT_REMOVE(2007,"不能删除待审核的申请"),
+    APPLICATION_CAN_NOT_UPDATE(2008,"不能修改非草稿的申请")
     ;
 
     private final int code;
