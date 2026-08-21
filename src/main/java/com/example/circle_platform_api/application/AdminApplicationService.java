@@ -10,7 +10,8 @@ import com.example.circle_platform_api.entity.CircleMember;
 import com.example.circle_platform_api.entity.User;
 import com.example.circle_platform_api.enums.ApplicationStatus;
 import com.example.circle_platform_api.enums.CircleMemberRole;
-import com.example.circle_platform_api.model.dto.CircleCreateApplicationPageDTO;
+import com.example.circle_platform_api.enums.UserStatus;
+import com.example.circle_platform_api.model.dto.CircleCreateApplicationQueryDTO;
 import com.example.circle_platform_api.model.vo.CircleCreateApplicationVo;
 import com.example.circle_platform_api.service.CircleCreateApplicationService;
 import com.example.circle_platform_api.service.CircleMemberService;
@@ -48,6 +49,15 @@ public class AdminApplicationService {
 
         if (application.getStatus() != ApplicationStatus.PENDING) {
             throw new BusinessException(ResultCode.APPLICATION_PROCESSED);
+        }
+
+        User applicant = userService.getById(application.getUserId());
+        if (applicant == null) {
+            throw new BusinessException(ResultCode.USER_NOT_FOUND);
+        }
+
+        if (applicant.getStatus() != UserStatus.ENROLLED) {
+            throw new BusinessException(ResultCode.USER_DISABLED);
         }
 
         // 更新申请表
@@ -106,7 +116,7 @@ public class AdminApplicationService {
         circleCreateApplicationService.updateById(createApplication);
     }
 
-    public PageResult<CircleCreateApplicationVo> getApplications(CircleCreateApplicationPageDTO dto) {
+    public PageResult<CircleCreateApplicationVo> getApplications(CircleCreateApplicationQueryDTO dto) {
 
         long pageNum = Math.max(1, dto.getPageNum());
         Page<CircleCreateApplication> page = Page.of(pageNum, dto.getPageSize());

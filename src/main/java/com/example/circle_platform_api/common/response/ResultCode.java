@@ -40,7 +40,12 @@ public enum ResultCode {
     CIRCLE_UPDATE_FAIL(2005,"社团更新失败"),
     APPLICATION_APPLIED(2006,"不能重复申请"),
     APPLICATION_CAN_NOT_REMOVE(2007,"不能删除待审核的申请"),
-    APPLICATION_CAN_NOT_UPDATE(2008,"不能修改非草稿的申请")
+    APPLICATION_CAN_NOT_UPDATE(2008,"不能修改非草稿的申请"),
+    CIRCLE_IS_NOT_NORMAL(2009,"社团状态不可用"),
+
+    ALREADY_MEMBER(3000,"已经是改社团成员"),
+    IS_NOT_CIRCLE_MEMBER(3001,"不是改社团成员"),
+    PRESIDENT_CAN_NOT_LEAVE(3002,"社长不能直接退出，请先转让社长或解散社团"),
     ;
 
     private final int code;

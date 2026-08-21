@@ -4,9 +4,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.circle_platform_api.common.exception.BusinessException;
 import com.example.circle_platform_api.common.response.PageResult;
 import com.example.circle_platform_api.common.response.ResultCode;
-import com.example.circle_platform_api.entity.Circle;
-import com.example.circle_platform_api.entity.CircleCreateApplication;
-import com.example.circle_platform_api.entity.User;
+import com.example.circle_platform_api.entity.*;
 import com.example.circle_platform_api.enums.ApplicationStatus;
 import com.example.circle_platform_api.enums.CircleStatus;
 import com.example.circle_platform_api.enums.UserRole;
@@ -17,15 +15,14 @@ import com.example.circle_platform_api.model.vo.CircleDetailVo;
 import com.example.circle_platform_api.model.vo.CircleVo;
 import com.example.circle_platform_api.security.service.SecurityUser;
 import com.example.circle_platform_api.security.utils.SecurityUtils;
-import com.example.circle_platform_api.service.CircleCreateApplicationService;
-import com.example.circle_platform_api.service.CircleService;
-import com.example.circle_platform_api.service.UserService;
+import com.example.circle_platform_api.service.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 
@@ -36,6 +33,8 @@ public class CircleApplicationService {
     private final CircleService circleService;
     private final UserService userService;
     private final CircleCreateApplicationService circleCreateApplicationService;
+    private final CircleMemberService memberService;
+    private final CircleJoinApplicationService joinApplicationService;
     private final CircleConvert circleConvert;
 
     @Transactional(rollbackFor = Exception.class)
@@ -72,17 +71,17 @@ public class CircleApplicationService {
         if (dto.getCategoryId() != null) {
             updateApplication.setCategoryId(dto.getCategoryId());
         }
-        if (!dto.getDescription().isBlank()) {
+        if (dto.getDescription() != null && !dto.getDescription().isBlank()) {
             updateApplication.setDescription(dto.getDescription());
         }
-        if (!dto.getApplyReason().isBlank()) {
+        if (dto.getApplyReason() != null && !dto.getApplyReason().isBlank()) {
             updateApplication.setApplyReason(dto.getApplyReason());
         }
         return updateApplication;
     }
 
     @Transactional(readOnly = true)
-    public PageResult<CircleCreateApplicationVo> getApplications(CircleCreateApplicationPageDTO dto) {
+    public PageResult<CircleCreateApplicationVo> getApplications(CircleCreateApplicationQueryDTO dto) {
 
         long pageNum = Math.max(1, dto.getPageNum());
         Page<CircleCreateApplication> page = Page.of(pageNum, dto.getPageSize());
@@ -95,7 +94,7 @@ public class CircleApplicationService {
                 .orderByDesc(CircleCreateApplication::getCreatedAt)
                 .page(page);
 
-        String applyUserName = !user.getNickname().isBlank() ? user.getNickname() : user.getUsername();
+        String applyUserName = user.getNickname() != null && !user.getNickname().isBlank() ? user.getNickname() : user.getUsername();
 
         List<CircleCreateApplicationVo> vos = page.getRecords().stream()
                 .map(c -> new CircleCreateApplicationVo(
@@ -241,6 +240,19 @@ public class CircleApplicationService {
         circleService.lambdaUpdate()
                 .eq(Circle::getId, circle.getId())
                 .set(Circle::getStatus, CircleStatus.DISSOLVED)
+                .set(Circle::getMemberCount, 0)
+                .update();
+
+        memberService.lambdaUpdate()
+                .eq(CircleMember::getCircleId, circle.getId())
+                .remove();
+
+        joinApplicationService.lambdaUpdate()
+                .eq(CircleJoinApplication::getCircleId, circleId)
+                .eq(CircleJoinApplication::getStatus, ApplicationStatus.PENDING)
+                .set(CircleJoinApplication::getStatus, ApplicationStatus.REJECTED)
+                .set(CircleJoinApplication::getReviewRemark, "社团已解散，申请自动拒绝")
+                .set(CircleJoinApplication::getReviewedAt, LocalDateTime.now())
                 .update();
     }
 
