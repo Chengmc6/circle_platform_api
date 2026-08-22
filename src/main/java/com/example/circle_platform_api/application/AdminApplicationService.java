@@ -140,8 +140,13 @@ public class AdminApplicationService {
                 .filter(Objects::nonNull)
                 .collect(Collectors.toMap(User::getId, u -> u));
 
+        Set<Long> reviewerIds = page.getRecords().stream().map(CircleCreateApplication::getReviewerId).collect(Collectors.toSet());
+        List<User> reviewers = userService.listByIds(reviewerIds);
+        Map<Long, User> reviewerMap = reviewers.stream().collect(Collectors.toMap(User::getId, u -> u));
+
         List<CircleCreateApplicationVo> vos = page.getRecords().stream()
                 .map(c -> {
+                    User reviewer = reviewerMap.get(c.getReviewerId());
                     User user = userMap.get(c.getUserId());
                     String applyUserName = "已注销用户";
                     Long userId = null;
@@ -156,7 +161,11 @@ public class AdminApplicationService {
                             c.getCategoryId(),
                             c.getName(),
                             c.getStatus(),
-                            c.getCreatedAt()
+                            c.getCreatedAt(),
+                            c.getReviewerId(),
+                            StringUtils.hasText(reviewer.getNickname()) ? reviewer.getNickname() : reviewer.getUsername(),
+                            c.getReviewRemark(),
+                            c.getReviewedAt()
                     );
                 })
                 .toList();

@@ -1,5 +1,6 @@
 package com.example.circle_platform_api.application;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.circle_platform_api.common.exception.BusinessException;
 import com.example.circle_platform_api.common.response.PageResult;
 import com.example.circle_platform_api.common.response.ResultCode;
@@ -43,7 +44,7 @@ public class CircleMemberApplicationService {
     private final CircleJoinApplicationService joinApplicationService;
 
     @Transactional(rollbackFor = Exception.class)
-    public void createJoinApplication(Long circleId,CircleJoinApplicationDTO dto) {
+    public void createJoinApplication(Long circleId, CircleJoinApplicationDTO dto) {
 
         Circle circle = circleService.getById(circleId);
 
@@ -98,7 +99,7 @@ public class CircleMemberApplicationService {
             throw new BusinessException(ResultCode.APPLICATION_PROCESSED);
         }
 
-        if(!Objects.equals(joinApplication.getCircleId(),circleId)){
+        if (!Objects.equals(joinApplication.getCircleId(), circleId)) {
             throw new BusinessException(ResultCode.FORBIDDEN);
         }
 
@@ -154,15 +155,15 @@ public class CircleMemberApplicationService {
         joinApplicationService.lambdaUpdate()
                 .eq(CircleJoinApplication::getId, applicationId)
                 .set(CircleJoinApplication::getStatus, ApplicationStatus.APPROVED)
-                .set(CircleJoinApplication::getReviewerId,dto.getReviewId())
-                .set(StringUtils.hasText(dto.getReviewMark()),CircleJoinApplication::getReviewRemark,dto.getReviewMark())
+                .set(CircleJoinApplication::getReviewerId, dto.getReviewId())
+                .set(StringUtils.hasText(dto.getReviewMark()), CircleJoinApplication::getReviewRemark, dto.getReviewMark())
                 .set(CircleJoinApplication::getReviewedAt, LocalDateTime.now())
                 .update();
 
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public void reject(Long circleId,Long applicationId,CircleJoinApplicationReviewDTO dto) {
+    public void reject(Long circleId, Long applicationId, CircleJoinApplicationReviewDTO dto) {
         CircleJoinApplication joinApplication = joinApplicationService.getById(applicationId);
 
         if (joinApplication == null) {
@@ -173,7 +174,7 @@ public class CircleMemberApplicationService {
             throw new BusinessException(ResultCode.APPLICATION_PROCESSED);
         }
 
-        if(!Objects.equals(joinApplication.getCircleId(),circleId)){
+        if (!Objects.equals(joinApplication.getCircleId(), circleId)) {
             throw new BusinessException(ResultCode.FORBIDDEN);
         }
 
@@ -209,8 +210,8 @@ public class CircleMemberApplicationService {
         joinApplicationService.lambdaUpdate()
                 .eq(CircleJoinApplication::getId, applicationId)
                 .set(CircleJoinApplication::getStatus, ApplicationStatus.REJECTED)
-                .set(CircleJoinApplication::getReviewerId,dto.getReviewId())
-                .set(StringUtils.hasText(dto.getReviewMark()),CircleJoinApplication::getReviewRemark,dto.getReviewMark())
+                .set(CircleJoinApplication::getReviewerId, dto.getReviewId())
+                .set(StringUtils.hasText(dto.getReviewMark()), CircleJoinApplication::getReviewRemark, dto.getReviewMark())
                 .set(CircleJoinApplication::getReviewedAt, LocalDateTime.now())
                 .update();
     }
@@ -249,8 +250,65 @@ public class CircleMemberApplicationService {
                 .update();
     }
 
-    public PageResult<CircleJoinApplicationVo> getApplications(CircleJoinApplicationQueryDTO dto){
-        return null;
+    public PageResult<CircleJoinApplicationVo> getApplications(Long circleId, CircleJoinApplicationQueryDTO dto) {
+
+        Circle circle = circleService.getById(circleId);
+
+        if (circle == null) {
+            throw new BusinessException(ResultCode.CIRCLE_NOT_FOUND);
+        }
+
+        if (circle.getStatus() == CircleStatus.DISSOLVED) {
+            throw new BusinessException(ResultCode.CIRCLE_DISSOLVED);
+        }
+
+        Page<CircleJoinApplication> page = Page.of(dto.getPageNum(), dto.getPageSize());
+
+        joinApplicationService.lambdaQuery()
+                .eq(CircleJoinApplication::getCircleId, circleId)
+                .eq(CircleJoinApplication::getStatus, ApplicationStatus.fromCode(dto.getStatus()))
+                .page(page);
+
+        if (page.getRecords().isEmpty()) {
+            return PageResult.empty(dto.getPageNum(), dto.getPageSize());
+        }
+
+        Set<Long> userIds = page.getRecords().stream()
+                .map(CircleJoinApplication::getUserId)
+                .collect(Collectors.toSet());
+
+        Set<Long> reviewerIds = page.getRecords().stream()
+                .map(CircleJoinApplication::getReviewerId)
+                .collect(Collectors.toSet());
+
+        List<User> users = userService.listByIds(userIds);
+        List<User> reviewers = userService.listByIds(reviewerIds);
+
+        Map<Long, User> userMap = users.stream().collect(Collectors.toMap(User::getId, u -> u));
+        Map<Long, User> reviewerMap = reviewers.stream().collect(Collectors.toMap(User::getId, u -> u));
+
+        List<CircleJoinApplicationVo> vos = page.getRecords().stream()
+                .map(j -> {
+                    User user = userMap.get(j.getUserId());
+                    User reviewer = reviewerMap.get(j.getReviewerId());
+                    return new CircleJoinApplicationVo(
+                            j.getId(),
+                            circleId,
+                            j.getUserId(),
+                            StringUtils.hasText(user.getNickname()) ? user.getNickname() : user.getUsername(),
+                            j.getApplyReason(),
+                            j.getStatus(),
+                            j.getCreatedAt(),
+                            j.getReviewerId(),
+                            StringUtils.hasText(reviewer.getNickname()) ? reviewer.getNickname() : reviewer.getUsername(),
+                            j.getReviewRemark(),
+                            j.getReviewedAt()
+                    );
+                })
+                .toList();
+
+
+        return PageResult.of(page.getTotal(), page.getCurrent(), page.getSize(), page.getPages(), vos);
     }
 
     public List<CircleMemberVo> getMembers(Long circleId) {
@@ -293,6 +351,44 @@ public class CircleMemberApplicationService {
                 .toList();
     }
 
+    @Transactional(rollbackFor = Exception.class)
+    public void removeCircleMember(Long circleId, Long memberId) {
 
+        Circle circle = circleService.getById(circleId);
+
+        if (circle == null) {
+            throw new BusinessException(ResultCode.CIRCLE_NOT_FOUND);
+        }
+
+        if (circle.getStatus() == CircleStatus.DISSOLVED) {
+            throw new BusinessException(ResultCode.CIRCLE_DISSOLVED);
+        }
+
+        CircleMember current = memberService.lambdaQuery()
+                .eq(CircleMember::getCircleId, circleId)
+                .eq(CircleMember::getUserId, SecurityUtils.getCurrentUserId())
+                .one();
+
+        if (current == null || current.getRole() == CircleMemberRole.MEMBER) {
+            throw new BusinessException(ResultCode.FORBIDDEN);
+        }
+
+        CircleMember member = memberService.getById(memberId);
+
+        if (member == null) {
+            throw new BusinessException(ResultCode.MEMBER_NOT_FOUND);
+        }
+
+        if (Objects.equals(member.getUserId(), SecurityUtils.getCurrentUserId())) {
+            throw new BusinessException(ResultCode.CAN_NOT_REMOVE_YOURSELF);
+        }
+
+        if (member.getRole() != CircleMemberRole.MEMBER) {
+            throw new BusinessException(ResultCode.FORBIDDEN);
+        }
+
+        memberService.removeById(memberId);
+
+    }
 
 }

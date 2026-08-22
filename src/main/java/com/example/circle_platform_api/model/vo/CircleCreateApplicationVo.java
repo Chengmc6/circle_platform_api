@@ -11,6 +11,10 @@ public record CircleCreateApplicationVo(
         Long categoryId,
         String name,
         ApplicationStatus status,
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        Long reviewerId,
+        String reviewerName,
+        String reviewMark,
+        LocalDateTime reviewedAt
 ) {
 }

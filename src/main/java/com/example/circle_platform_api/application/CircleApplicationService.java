@@ -24,7 +24,10 @@ import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -94,18 +97,33 @@ public class CircleApplicationService {
                 .orderByDesc(CircleCreateApplication::getCreatedAt)
                 .page(page);
 
+        if (page.getRecords().isEmpty()) {
+            return PageResult.empty(dto.getPageNum(), dto.getPageSize());
+        }
+
         String applyUserName = user.getNickname() != null && !user.getNickname().isBlank() ? user.getNickname() : user.getUsername();
 
+        Set<Long> reviewerIds = page.getRecords().stream().map(CircleCreateApplication::getReviewerId).collect(Collectors.toSet());
+        List<User> reviewers = userService.listByIds(reviewerIds);
+        Map<Long, User> reviewerMap = reviewers.stream().collect(Collectors.toMap(User::getId, u -> u));
+
         List<CircleCreateApplicationVo> vos = page.getRecords().stream()
-                .map(c -> new CircleCreateApplicationVo(
-                        c.getId(),
-                        user.getId(),
-                        applyUserName,
-                        c.getCategoryId(),
-                        c.getName(),
-                        c.getStatus(),
-                        c.getCreatedAt()
-                ))
+                .map(c -> {
+                    User reviewer = reviewerMap.get(c.getReviewerId());
+                    return new CircleCreateApplicationVo(
+                            c.getId(),
+                            user.getId(),
+                            applyUserName,
+                            c.getCategoryId(),
+                            c.getName(),
+                            c.getStatus(),
+                            c.getCreatedAt(),
+                            c.getReviewerId(),
+                            StringUtils.hasText(reviewer.getNickname()) ? reviewer.getNickname() : reviewer.getUsername(),
+                            c.getReviewRemark(),
+                            c.getReviewedAt()
+                    );
+                })
                 .toList();
         return PageResult.of(page.getTotal(), page.getCurrent(), page.getSize(), page.getPages(), vos);
     }

@@ -2,8 +2,11 @@ package com.example.circle_platform_api.controller;
 
 import com.example.circle_platform_api.application.CircleMemberApplicationService;
 import com.example.circle_platform_api.common.response.ApiResponse;
+import com.example.circle_platform_api.common.response.PageResult;
 import com.example.circle_platform_api.model.dto.CircleJoinApplicationDTO;
+import com.example.circle_platform_api.model.dto.CircleJoinApplicationQueryDTO;
 import com.example.circle_platform_api.model.dto.CircleJoinApplicationReviewDTO;
+import com.example.circle_platform_api.model.vo.CircleJoinApplicationVo;
 import com.example.circle_platform_api.model.vo.CircleMemberVo;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -53,9 +56,20 @@ public class CircleMemberController {
         return ApiResponse.success();
     }
 
+    @GetMapping("/{circleId}/join")
+    public ApiResponse<PageResult<CircleJoinApplicationVo>> getApplications(@PathVariable Long circleId, @NotNull @Valid CircleJoinApplicationQueryDTO dto) {
+        return ApiResponse.success(memberApplicationService.getApplications(circleId, dto));
+    }
+
     @GetMapping("/{circleId}/members")
-    public ApiResponse<List<CircleMemberVo>> getMembers(@PathVariable Long circleId){
+    public ApiResponse<List<CircleMemberVo>> getMembers(@PathVariable Long circleId) {
         return ApiResponse.success(memberApplicationService.getMembers(circleId));
+    }
+
+    @DeleteMapping("/{circleId}/members/{memberId}")
+    public ApiResponse<Void> removeMember(@PathVariable Long circleId, @PathVariable Long memberId) {
+        memberApplicationService.removeCircleMember(circleId, memberId);
+        return ApiResponse.success();
     }
 
 }

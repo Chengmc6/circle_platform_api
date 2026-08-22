@@ -46,6 +46,8 @@ public enum ResultCode {
     ALREADY_MEMBER(3000,"已经是改社团成员"),
     IS_NOT_CIRCLE_MEMBER(3001,"不是改社团成员"),
     PRESIDENT_CAN_NOT_LEAVE(3002,"社长不能直接退出，请先转让社长或解散社团"),
+    MEMBER_NOT_FOUND(3003,"社团中不存在该成员"),
+    CAN_NOT_REMOVE_YOURSELF(3004,"不能踢出自己"),
     ;
 
     private final int code;
